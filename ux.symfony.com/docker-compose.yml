@@ -17,10 +17,76 @@ services:
     volumes:
       - mercure_data:/data
       - mercure_config:/config
+    networks:
+      - demoux-server-network
 ###< symfony/mercure-bundle ###
+
+#  demoux-server-encore-dev:
+#    container_name: demoux-server-encore-dev
+#    image: node:16-alpine
+#    ports:
+#      - 8090:8090
+#    volumes:
+#      # punto de entrada de la app symfony
+#      - ./:/appdata/www
+#    working_dir: /appdata/www
+#    command: ["yarn", "dev-server"]
+#    depends_on:
+#      - demoux-server-web
+#    networks:
+#      - demoux-server-network
+
+  demoux-server-web:
+    container_name: demoux-server-web
+    build:
+      context: ./docker/nginx
+      args:
+        UID: $U_ID
+    ports:
+      - 251:80
+    volumes:
+      # punto de entrada de la app symfony
+      - ./public:/appdata/www/public
+    depends_on:
+      - demoux-server-be
+    networks:
+      - demoux-server-network
+
+  demoux-server-be:
+    env_file:
+      - ./docker/proxy.env
+    container_name: demoux-server-be
+    build:
+      # Proxy configurado en el Dockerfile, no toma los archivos .env en el build
+      context: docker/php
+      args:
+        UID: $U_ID
+    environment:
+      ###> XDEBUG 3 ###
+      # Use your client IP here
+      # Linux: run "ip a | grep docker0"
+      # Windows (with WSL2) and Mac: host.docker.internal
+      # Las configuraciones se reflejan el archivo docker/php/xdebug.ini
+      XDEBUG_CLIENT_HOST: 172.17.0.1
+      XDEBUG_CLIENT_PORT: 9006
+      XDEBUG_ID_KEY: PHPSTORM
+      PHP_IDE_CONFIG: serverName=Docker
+      DEBUG: 1
+    volumes:
+      - ./:/appdata/www
+      - ../00_Bundles/maker-bundle:/appdata/00_Bundles/maker-bundle
+      - ./docker/php/php.ini:$PHP_INI_DIR/php.ini
+      - ./docker/php/xdebug.ini:$PHP_INI_DIR/conf.d/xdebug.ini
+      - ~/.ssh/id_rsa:/home/appuser/.ssh/id_rsa
+    networks:
+      - demoux-server-network
 
 volumes:
 ###> symfony/mercure-bundle ###
   mercure_data:
   mercure_config:
 ###< symfony/mercure-bundle ###
+
+networks:
+  demoux-server-network:
+    external: true
