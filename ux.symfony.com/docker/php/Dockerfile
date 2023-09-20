@@ -57,7 +57,7 @@ RUN echo "alias sf=/appdata/www/bin/console" >> /home/appuser/.bashrc
 
 #Instalacion de Symfony/CLI
 RUN wget https://get.symfony.com/cli/installer -O - | bash && export PATH="$HOME/.symfony/bin:$PATH"
-#RUN mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
+RUN mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
 
 RUN mkdir -p /appdata/www
 

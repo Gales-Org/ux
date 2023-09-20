@@ -79,9 +79,10 @@ config-db-user:
 	docker exec ${DOCKER_DB} sh -c 'exec mysqldump --all-databases -uroot -p root' < /docker/database/configUser.sql
 
 install-yarn:
-	docker exec -it --user ${UID} ${DOCKER_BE} composer install
+	docker exec -it --user ${UID} ${DOCKER_BE} symfony composer install
 	docker exec -it --user ${UID} ${DOCKER_BE} yarn install
-	docker exec -it --user ${UID} ${DOCKER_BE} yarn dev
+	docker exec -it --user ${UID} ${DOCKER_BE} yarn build
+	docker exec -it --user ${UID} ${DOCKER_BE} symfony console sass:build
 
 init-project-name:
 	rm -Rf ./var/cache/ ./var/log/ ./public/build ./node_modules ./var ./vendor
@@ -90,5 +91,5 @@ init-project-name:
 	{ grep -RiIl 'symfony6base' --exclude=Makefile --exclude-dir={.git,.idea} & echo docker-compose.yml; } | cat | xargs sed -i 's/symfony6base/${PROJECT_NAME}/g'
 
 run-fixtures:
-	docker exec -it --user ${UID} ${DOCKER_BE} php bin/console doctrine:schema:update --dump-sql --force
-	docker exec -it --user ${UID} ${DOCKER_BE} php bin/console doctrine:fixtures:load --no-interaction
+	docker exec -it --user ${UID} ${DOCKER_BE} symfony console doctrine:migration:migrate --no-interaction
+	docker exec -it --user ${UID} ${DOCKER_BE} symfony console app:load-data --no-interaction
